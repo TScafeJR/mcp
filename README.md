@@ -1,6 +1,6 @@
 # @tscafejr/mcp
 
-MCP servers by TScafeJR, distributed as a single npm package with one bin per server.
+MCP servers I use across projects distributed as a single npm package with one bin per server.
 
 ## Installation (consumers)
 
@@ -102,12 +102,3 @@ npm version patch          # or: minor / major — bumps, commits, tags
 npm publish                # prepublishOnly rebuilds dist/
 git push --follow-tags     # if/when this dir has a git remote
 ```
-
-First-time publish prerequisites:
-
-```sh
-npm login                  # auth as a user with publish rights to @tscafejr
-git init && git add -A && git commit -m "init"   # npm version requires a clean git tree
-```
-
-`publishConfig.access` is set to `public` so the scoped package publishes without `--access public`.
