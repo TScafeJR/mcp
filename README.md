@@ -19,21 +19,67 @@ Wire a server into any MCP client config:
 
 ## Available servers
 
-| Bin               | Source                       | Description                                                                  |
-| ----------------- | ---------------------------- | ---------------------------------------------------------------------------- |
-| `mcp-visualizer`  | `src/servers/visualizer.ts`  | Puppeteer-driven screenshots, typing, and network/console diagnostics. Framework-agnostic — works with Vite, Next.js, CRA, Netlify dev, deploy previews, etc. |
+| Bin              | Source                      | Description                                                                                                                                     |
+| ---------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mcp-visualizer` | `src/servers/visualizer.ts` | Drives a real browser against a running web app: navigate, inspect, click, type, screenshot, diagnose and visually diff. Framework-agnostic — Vite, Next.js, CRA, Netlify dev, deploy previews, anything that serves HTTP. |
 
-### `mcp-visualizer` configuration
+---
 
-Target URL is resolved in this order (highest to lowest):
+## `mcp-visualizer`
 
-1. Per-call `base_url` arg — full URL, e.g. `https://my-site.netlify.app` or `http://localhost:8888`.
-2. Per-call `port` arg — localhost shorthand.
-3. `MCP_DEV_SERVER_URL` env — full base URL.
-4. `MCP_DEV_SERVER_HOST` + `MCP_DEV_SERVER_PORT` env.
-5. Default: `http://localhost:3000`.
+### How it works
 
-Example MCP client configs:
+One Chromium instance stays alive across tool calls, so **cookies, localStorage,
+scroll position and emulation settings persist**. You can log in once and keep
+working, and you only pay browser startup on the first call. The session closes
+itself after five idle minutes, or immediately on `browser_close`.
+
+Two things make the tools cheap to use:
+
+- **`browser_snapshot` before you interact.** It returns a text outline of the
+  page — controls, headings, landmarks — each tagged with a `[ref=eN]`. Pass that
+  ref to `browser_click` / `browser_type` instead of guessing a CSS selector from
+  a screenshot. It costs a fraction of an image.
+- **Screenshots are capped.** Output is downscaled to `max_width` (default
+  1000px) and viewport-only unless you ask for `full_page`. Targeting a
+  `selector` captures just that element, which is usually all you need.
+
+Console errors, uncaught exceptions and 4xx/5xx responses are recorded
+continuously and appended to **every** tool result, so a screenshot of a blank
+page tells you *why* it is blank.
+
+### Target resolution
+
+Highest precedence to lowest:
+
+1. Per-call `url` — absolute, wins outright.
+2. Per-call `base_url` — e.g. `https://preview-123.netlify.app`.
+3. Per-call `port` — localhost shorthand.
+4. `MCP_DEV_SERVER_URL` env — full base URL.
+5. `MCP_DEV_SERVER_HOST` + `MCP_DEV_SERVER_PORT` env.
+6. `http://localhost:3000`.
+
+A call with no target at all acts on the page already open.
+
+### Environment
+
+| Variable                       | Default                  | Purpose                                                        |
+| ------------------------------ | ------------------------ | -------------------------------------------------------------- |
+| `MCP_DEV_SERVER_URL`           | —                        | Full base URL.                                                  |
+| `MCP_DEV_SERVER_HOST`          | `localhost`              | Host used with `MCP_DEV_SERVER_PORT`.                           |
+| `MCP_DEV_SERVER_PORT`          | —                        | Port on that host.                                              |
+| `MCP_DEV_SERVER_HEADERS`       | —                        | JSON object of extra request headers (preview bypass tokens).   |
+| `MCP_DEV_SERVER_BASIC_AUTH`    | —                        | `user:pass` for password-protected deploy previews.             |
+| `MCP_VISUALIZER_IDLE_MS`       | `300000`                 | Idle time before the browser closes itself.                     |
+| `MCP_VISUALIZER_WIDTH/HEIGHT`  | `1280` / `800`           | Default desktop viewport.                                       |
+| `MCP_VISUALIZER_MAX_WIDTH`     | `1000`                   | Default screenshot width cap.                                   |
+| `MCP_VISUALIZER_MAX_HEIGHT`    | `4000`                   | Default cap for `full_page` captures.                           |
+| `MCP_VISUALIZER_BASELINE_DIR`  | `./.visualizer-baselines`| Where `browser_diff` stores baselines.                          |
+| `MCP_VISUALIZER_HEADFUL`       | —                        | `1` to watch the browser drive itself.                          |
+| `MCP_VISUALIZER_DIALOGS`       | `dismiss`                | `accept` to accept `alert()` / `confirm()` instead.             |
+| `MCP_VISUALIZER_LEGACY_TOOLS`  | —                        | `0` to hide the three legacy tool names.                        |
+
+Example client configs:
 
 ```json
 // Vite project
@@ -48,12 +94,73 @@ Example MCP client configs:
   "env": { "MCP_DEV_SERVER_PORT": "8888" }
 }}}
 
-// Remote deploy preview
+// Password-protected deploy preview
 { "mcpServers": { "visualizer": {
   "command": "npx", "args": ["-y", "@tscafejr/mcp", "mcp-visualizer"],
-  "env": { "MCP_DEV_SERVER_URL": "https://preview-123.example.com" }
+  "env": {
+    "MCP_DEV_SERVER_URL": "https://preview-123.example.com",
+    "MCP_DEV_SERVER_BASIC_AUTH": "preview:hunter2"
+  }
 }}}
 ```
+
+### Tools
+
+**Look**
+
+| Tool                 | Notes                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| `browser_navigate`   | Open a route. Also carries emulation: `width`/`height`, `device`, `dark`, `reduced_motion`, `pwa`, `safe_area`. Called with only emulation options it reconfigures the open page. |
+| `browser_snapshot`   | Text outline with `[ref=eN]` handles. `mode: full` adds body text; `root` scopes to a subtree.            |
+| `browser_screenshot` | Viewport by default. `selector`/`ref` clips to one element; `full_page`, `max_width`, `format`, `quality`. |
+| `browser_responsive` | The same page at several widths in one call (default 375 / 768 / 1280).                                   |
+| `browser_diff`       | Compare against a saved baseline; reports changed pixel count, percentage, bounding box and a diff image. |
+
+**Act**
+
+| Tool             | Notes                                                                          |
+| ---------------- | -------------------------------------------------------------------------------- |
+| `browser_click`  | `action: click \| double \| right \| hover`.                                     |
+| `browser_type`   | `clear` to replace the value, `submit` to press Enter, `delay` for debounced inputs. |
+| `browser_press`  | Keys and chords — `Enter`, `Escape`, `Meta+K`.                                   |
+| `browser_scroll` | `to: top \| bottom`, a `dy` offset, or scroll an element into view.              |
+| `browser_select` | Choose `<select>` options by value.                                              |
+
+Every action tool takes `ref` / `selector` / `find_text` to target an element,
+`wait_for` (a selector, or `text=Some copy`) to wait afterwards, and optional
+`screenshot` / `snapshot` flags to return the result.
+
+**Diagnose**
+
+| Tool                  | Notes                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `browser_eval`        | Run JS in the page and get JSON back. Assert app state without spending a screenshot.       |
+| `browser_diagnostics` | Console errors/warnings, exceptions, failed and 4xx/5xx requests. `since: navigation \| session`. |
+| `browser_close`       | Drop the session — cookies, storage and emulation with it.                                  |
+
+`screenshot_page`, `type_into_element` and `inspect_network_errors` still work as
+one-shot wrappers over the same engine. Set `MCP_VISUALIZER_LEGACY_TOOLS=0` to
+hide them.
+
+### PWA and safe areas
+
+`pwa: true` emulates an iOS standalone install: `display-mode: standalone`,
+`navigator.standalone`, an iPhone viewport, and **real `env(safe-area-inset-*)`
+values** via Chrome DevTools Protocol — your own layout responds to them, no
+class-name assumptions. Override the numbers with `safe_area: { top, bottom }`,
+and turn off the tinted guide bars with `pwa_overlay: false`.
+
+### Visual baselines
+
+`browser_diff` stores PNGs in `.visualizer-baselines/` under the working
+directory. Commit them if you want regressions caught across machines; ignore
+the directory if you only use it locally within a session.
+
+The comparison is pixel-exact, so a baseline is only meaningful against the same
+capture settings — keep `max_width`, `full_page` and viewport identical between
+runs, or re-record with `update: true`.
+
+---
 
 ## Adding a new server
 
@@ -65,6 +172,10 @@ Example MCP client configs:
    import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
    // ...
    ```
+
+   Keep the entry thin and put the implementation in `src/<name>/`, the way
+   `visualizer.ts` delegates to `src/visualizer/`. Node ESM needs real
+   extensions, so import local modules as `./thing.js`.
 
 2. Add one line to the `bin` map in `package.json`:
 
