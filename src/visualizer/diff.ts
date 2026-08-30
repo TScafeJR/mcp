@@ -104,14 +104,11 @@ export async function compareToBaseline(
 
   const { width, height } = baseline;
   const diff = new PNG({ width, height });
-  const changedPixels = pixelmatch(
-    baseline.data,
-    actual.data,
-    diff.data,
-    width,
-    height,
-    { threshold: opts.threshold ?? 0.1, includeAA: false, alpha: 0.25 },
-  );
+  const changedPixels = pixelmatch(baseline.data, actual.data, diff.data, width, height, {
+    threshold: opts.threshold ?? 0.1,
+    includeAA: false,
+    alpha: 0.25,
+  });
 
   const total = width * height;
   const changedPercent = total ? (changedPixels / total) * 100 : 0;
@@ -131,7 +128,10 @@ export async function compareToBaseline(
 export async function listBaselines(): Promise<string[]> {
   try {
     const files = await fs.readdir(BASELINE_DIR);
-    return files.filter((f) => f.endsWith(".png")).map((f) => f.slice(0, -4)).sort();
+    return files
+      .filter((f) => f.endsWith(".png"))
+      .map((f) => f.slice(0, -4))
+      .sort();
   } catch {
     return [];
   }

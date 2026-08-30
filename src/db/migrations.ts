@@ -81,9 +81,7 @@ export async function migrationReport(driver: Driver): Promise<string> {
   if (!dir) return sections.join("\n\n");
   sections.unshift(`Directory: ${dir}`);
 
-  const entries = (await fs.readdir(dir))
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
+  const entries = (await fs.readdir(dir)).filter((f) => f.endsWith(".sql")).sort();
   // Prisma/drizzle keep one directory per migration rather than flat files.
   const dirEntries = entries.length
     ? []
@@ -109,11 +107,7 @@ export async function migrationReport(driver: Driver): Promise<string> {
         : ledger.versions.has(file)
       : false;
     if (!applied) pending.push(file);
-    rows.push([
-      file,
-      version ?? "—",
-      ledger ? (applied ? "applied" : "PENDING") : "unknown",
-    ]);
+    rows.push([file, version ?? "—", ledger ? (applied ? "applied" : "PENDING") : "unknown"]);
   }
 
   sections.push(

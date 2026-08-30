@@ -8,10 +8,6 @@ if (!mode || !name) {
 }
 
 const cmd =
-  mode === "dev"
-    ? ["tsx", `src/servers/${name}.ts`]
-    : ["node", `dist/servers/${name}.js`];
+  mode === "dev" ? ["tsx", `src/servers/${name}.ts`] : ["node", `dist/servers/${name}.js`];
 
-spawn("npx", cmd, { stdio: "inherit" }).on("exit", (code) =>
-  process.exit(code ?? 0),
-);
+spawn("npx", cmd, { stdio: "inherit" }).on("exit", (code) => process.exit(code ?? 0));

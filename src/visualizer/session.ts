@@ -88,9 +88,7 @@ class VisualizerSession {
   }
 
   eventsSince(seq: number, kinds?: EventKind[]): SessionEvent[] {
-    return this.events.filter(
-      (e) => e.seq > seq && (!kinds || kinds.includes(e.kind)),
-    );
+    return this.events.filter((e) => e.seq > seq && (!kinds || kinds.includes(e.kind)));
   }
 
   /** Errors only — cheap enough to append to every tool result. */
@@ -131,11 +129,7 @@ class VisualizerSession {
 
     this.browser = await puppeteer.launch({
       headless: HEADLESS,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
     });
     this.browser.on("disconnected", () => {
       this.browser = null;
@@ -287,9 +281,7 @@ class VisualizerSession {
    * emulation overrides it set, so safe-area insets must not be sent from a
    * throwaway session.
    */
-  private async withCdp<T>(
-    fn: (cdp: CDPSession) => Promise<T>,
-  ): Promise<T | null> {
+  private async withCdp<T>(fn: (cdp: CDPSession) => Promise<T>): Promise<T | null> {
     const page = this.currentPage;
     if (!page) return null;
     try {
@@ -337,14 +329,16 @@ class VisualizerSession {
    * responds instead of us guessing at its class names.
    */
   private async applySafeArea(): Promise<void> {
-    const insets =
-      this.emulation.safeArea ?? (this.emulation.pwa ? IPHONE_SAFE_AREA : null);
+    const insets = this.emulation.safeArea ?? (this.emulation.pwa ? IPHONE_SAFE_AREA : null);
     // Not present in every Chromium build; withCdp swallows the failure and
     // the overlay still shows where the insets would sit.
     await this.withCdp((cdp) =>
-      cdp.send("Emulation.setSafeAreaInsetsOverride" as never, {
-        insets: insets ? { ...insets } : {},
-      } as never),
+      cdp.send(
+        "Emulation.setSafeAreaInsetsOverride" as never,
+        {
+          insets: insets ? { ...insets } : {},
+        } as never,
+      ),
     );
   }
 
@@ -353,9 +347,7 @@ class VisualizerSession {
     if (!page) return;
 
     if (this.pwaScriptId) {
-      await page
-        .removeScriptToEvaluateOnNewDocument(this.pwaScriptId)
-        .catch(() => {});
+      await page.removeScriptToEvaluateOnNewDocument(this.pwaScriptId).catch(() => {});
       this.pwaScriptId = null;
     }
     if (!this.emulation.pwa) {
@@ -437,10 +429,7 @@ class VisualizerSession {
    * Waits for a quiet window with no in-flight requests, then gives up. Unlike
    * `networkidle0` this can never hang on a socket or a polling endpoint.
    */
-  async waitForNetworkQuiet(
-    quietMs = 400,
-    timeout = SETTLE_TIMEOUT,
-  ): Promise<boolean> {
+  async waitForNetworkQuiet(quietMs = 400, timeout = SETTLE_TIMEOUT): Promise<boolean> {
     const start = Date.now();
     let quietSince = this.inflight === 0 ? Date.now() : 0;
     while (Date.now() - start < timeout) {

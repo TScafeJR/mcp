@@ -5,6 +5,8 @@ import { assertReadOnly, stripLiterals } from "./guard.js";
 import { renderTable } from "./format.js";
 import { describeTable, overview, searchSchema } from "./introspect.js";
 import { migrationReport } from "./migrations.js";
+import { policiesReport } from "./policies.js";
+import { relationsReport } from "./relations.js";
 
 export type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
@@ -19,8 +21,14 @@ export const tools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        table: { type: "string", description: "Table or view to describe, e.g. users or public.users." },
-        search: { type: "string", description: "Substring to match against table and column names." },
+        table: {
+          type: "string",
+          description: "Table or view to describe, e.g. users or public.users.",
+        },
+        search: {
+          type: "string",
+          description: "Substring to match against table and column names.",
+        },
       },
     },
   },
@@ -32,7 +40,10 @@ export const tools: Tool[] = [
       type: "object",
       properties: {
         sql: { type: "string", description: "A single SELECT / WITH / VALUES statement." },
-        limit: { type: "number", description: `Max rows to return (default ${MAX_ROWS}, hard cap 1000).` },
+        limit: {
+          type: "number",
+          description: `Max rows to return (default ${MAX_ROWS}, hard cap 1000).`,
+        },
       },
       required: ["sql"],
     },
@@ -55,6 +66,30 @@ export const tools: Tool[] = [
     },
   },
   {
+    name: "db_relations",
+    description:
+      "How tables connect. With no arguments: every relationship in the database. With `table`: everything touching that table. With `from` and `to`: the shortest join path between them, emitted as ready-to-run SQL. Covers declared foreign keys and, where none exist, links inferred from the `<table>_id` column naming convention — inferred links are labelled as such.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        table: { type: "string", description: "Show only relationships touching this table." },
+        from: { type: "string", description: "Start table for a join path. Use with `to`." },
+        to: { type: "string", description: "Destination table for a join path. Use with `from`." },
+      },
+    },
+  },
+  {
+    name: "db_policies",
+    description:
+      "Postgres row-level security: which tables have RLS on, and each policy's command, roles and USING / WITH CHECK expressions. Flags the two silent failure modes — RLS enabled with no policies (every row denied, queries return empty instead of erroring) and RLS off (no filtering at all). Check this when a query works for you but returns nothing for a real user.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        table: { type: "string", description: "Show full policy expressions for one table." },
+      },
+    },
+  },
+  {
     name: "db_migrations",
     description:
       "Compare the migration files on disk against what the database has actually applied. Reports pending migrations, migrations applied but missing from disk (a branch mismatch), and failed ones. Understands sqlx, Supabase, Drizzle and plain schema_migrations ledgers.",
@@ -72,7 +107,10 @@ function fail(message: string): ToolResult {
 
 /** EXPLAIN and SHOW cannot be wrapped in a subquery to cap their rows. */
 function isWrappable(sql: string): boolean {
-  const leader = stripLiterals(sql).trim().match(/^\(*\s*([a-z]+)/i)?.[1]?.toLowerCase();
+  const leader = stripLiterals(sql)
+    .trim()
+    .match(/^\(*\s*([a-z]+)/i)?.[1]
+    ?.toLowerCase();
   return leader === "select" || leader === "with" || leader === "table" || leader === "values";
 }
 
@@ -87,7 +125,9 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
         if (args.search) return ok(await searchSchema(driver, String(args.search)));
         if (args.table) return ok(await describeTable(driver, String(args.table)));
         const header = `${await driver.version()} — ${driver.label}`;
-        return ok(`${header}\n${"─".repeat(Math.min(header.length, 70))}\n${await overview(driver)}`);
+        return ok(
+          `${header}\n${"─".repeat(Math.min(header.length, 70))}\n${await overview(driver)}`,
+        );
       }
 
       case "db_query": {
@@ -119,12 +159,22 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
           // Plan detail is the whole point — don't clip it to the cell default.
           return ok(renderTable(result, { maxCell: 300 }));
         }
-        const options = args.analyze
-          ? "analyze true, buffers true, format text"
-          : "format text";
+        const options = args.analyze ? "analyze true, buffers true, format text" : "format text";
         const result = await driver.query(`explain (${options}) ${bare}`);
         return ok(result.rows.map((r) => String(r[0])).join("\n") || "(empty plan)");
       }
+
+      case "db_relations":
+        return ok(
+          await relationsReport(driver, {
+            table: args.table,
+            from: args.from,
+            to: args.to,
+          }),
+        );
+
+      case "db_policies":
+        return ok(await policiesReport(driver, { table: args.table }));
 
       case "db_migrations":
         return ok(await migrationReport(driver));

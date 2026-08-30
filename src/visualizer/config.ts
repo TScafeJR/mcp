@@ -73,8 +73,7 @@ export const DEFAULT_VIEWPORT = {
 };
 
 export const BASELINE_DIR =
-  process.env.MCP_VISUALIZER_BASELINE_DIR ||
-  path.join(process.cwd(), ".visualizer-baselines");
+  process.env.MCP_VISUALIZER_BASELINE_DIR || path.join(process.cwd(), ".visualizer-baselines");
 
 /** Legacy tool names stay listed unless explicitly disabled. */
 export const LEGACY_TOOLS = process.env.MCP_VISUALIZER_LEGACY_TOOLS !== "0";
@@ -89,9 +88,7 @@ export function extraHeaders(): Record<string, string> | undefined {
   try {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return Object.fromEntries(
-        Object.entries(parsed).map(([k, v]) => [k, String(v)]),
-      );
+      return Object.fromEntries(Object.entries(parsed).map(([k, v]) => [k, String(v)]));
     }
   } catch {
     /* fall through — bad JSON is reported by the caller via configWarnings */
@@ -111,14 +108,10 @@ export function basicAuth(): { username: string; password: string } | undefined 
 export function configWarnings(): string[] {
   const warnings: string[] = [];
   if (process.env.MCP_DEV_SERVER_HEADERS && !extraHeaders()) {
-    warnings.push(
-      "MCP_DEV_SERVER_HEADERS is set but is not a valid JSON object — ignored.",
-    );
+    warnings.push("MCP_DEV_SERVER_HEADERS is set but is not a valid JSON object — ignored.");
   }
   if (process.env.MCP_DEV_SERVER_BASIC_AUTH && !basicAuth()) {
-    warnings.push(
-      'MCP_DEV_SERVER_BASIC_AUTH is set but is not in "user:pass" form — ignored.',
-    );
+    warnings.push('MCP_DEV_SERVER_BASIC_AUTH is set but is not in "user:pass" form — ignored.');
   }
   return warnings;
 }

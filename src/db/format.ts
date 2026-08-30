@@ -51,18 +51,18 @@ export function renderTable(
     body = cells
       .map(
         (row, n) =>
-          `— row ${n + 1}\n` +
-          columns.map((col, i) => `  ${col}: ${row[i] ?? ""}`).join("\n"),
+          `— row ${n + 1}\n` + columns.map((col, i) => `  ${col}: ${row[i] ?? ""}`).join("\n"),
       )
       .join("\n");
   } else {
     const line = (values: string[]) =>
-      values.map((v, i) => v.padEnd(widths[i])).join("  ").trimEnd();
-    body = [
-      line(columns),
-      widths.map((w) => "─".repeat(w)).join("  "),
-      ...cells.map(line),
-    ].join("\n");
+      values
+        .map((v, i) => v.padEnd(widths[i]))
+        .join("  ")
+        .trimEnd();
+    body = [line(columns), widths.map((w) => "─".repeat(w)).join("  "), ...cells.map(line)].join(
+      "\n",
+    );
   }
 
   let out = body;

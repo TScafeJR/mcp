@@ -20,6 +20,8 @@
     "prepublishOnly": "npm run build",
     "dev": "node scripts/run.js dev",
     "start": "node scripts/run.js start",
+    "format": "prettier --write . --log-level silent",
+    "format:check": "prettier --check .",
     "release": "node scripts/release.js"
   },
   "dependencies": {
@@ -33,6 +35,7 @@
     "@types/node": "25.6.0",
     "@types/pg": "8.23.1",
     "@types/pngjs": "6.0.5",
+    "prettier": "3.9.6",
     "tsx": "4.21.0",
     "typescript": "6.0.3"
   },

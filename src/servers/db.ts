@@ -2,10 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { callTool, tools } from "../db/tools.js";
 import { closeDriver } from "../db/driver.js";
 import { resolveTarget } from "../db/config.js";

@@ -1,11 +1,5 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import {
-  LEGACY_TOOLS,
-  configWarnings,
-  hasTarget,
-  resolveUrl,
-  type TargetArgs,
-} from "./config.js";
+import { LEGACY_TOOLS, configWarnings, hasTarget, resolveUrl, type TargetArgs } from "./config.js";
 import { IPHONE_SAFE_AREA, session, VisualizerSession, type SessionEvent } from "./session.js";
 import { capture, captureBreakpoints, resolveTarget, type CaptureOptions } from "./capture.js";
 import {
@@ -26,27 +20,55 @@ export type ToolResult = {
 // --- Shared schema fragments ------------------------------------------------
 
 const NAV_PROPS = {
-  route: { type: "string", description: "Path to visit, e.g. /settings. Omit to act on the page already open." },
+  route: {
+    type: "string",
+    description: "Path to visit, e.g. /settings. Omit to act on the page already open.",
+  },
   url: { type: "string", description: "Absolute URL. Overrides route/base_url/port." },
-  base_url: { type: "string", description: "Base URL override, e.g. https://preview-123.netlify.app" },
+  base_url: {
+    type: "string",
+    description: "Base URL override, e.g. https://preview-123.netlify.app",
+  },
   port: { type: "number", description: "Localhost port shorthand. Ignored when base_url is set." },
 } as const;
 
 const TARGET_PROPS = {
-  ref: { type: "string", description: "Ref from browser_snapshot, e.g. e12. Most reliable — survives class-name churn." },
+  ref: {
+    type: "string",
+    description: "Ref from browser_snapshot, e.g. e12. Most reliable — survives class-name churn.",
+  },
   selector: { type: "string", description: "CSS selector." },
-  find_text: { type: "string", description: "Visible text or accessible name of the control, e.g. \"Sign in\"." },
+  find_text: {
+    type: "string",
+    description: 'Visible text or accessible name of the control, e.g. "Sign in".',
+  },
 } as const;
 
 const WAIT_PROPS = {
-  wait_for: { type: "string", description: "Wait for a CSS selector, or `text=Some copy`, before continuing." },
-  wait_ms: { type: "number", description: "Fixed extra wait in ms (capped at 120000). Prefer wait_for." },
+  wait_for: {
+    type: "string",
+    description: "Wait for a CSS selector, or `text=Some copy`, before continuing.",
+  },
+  wait_ms: {
+    type: "number",
+    description: "Fixed extra wait in ms (capped at 120000). Prefer wait_for.",
+  },
 } as const;
 
 const SHOT_PROPS = {
-  full_page: { type: "boolean", description: "Capture the whole scroll height instead of just the viewport. Default false — full pages are expensive." },
-  max_width: { type: "number", description: "Cap the output width in pixels (default 1000). The image is downscaled to fit." },
-  max_height: { type: "number", description: "Cap the output height in pixels (default 4000). Only applies to full_page." },
+  full_page: {
+    type: "boolean",
+    description:
+      "Capture the whole scroll height instead of just the viewport. Default false — full pages are expensive.",
+  },
+  max_width: {
+    type: "number",
+    description: "Cap the output width in pixels (default 1000). The image is downscaled to fit.",
+  },
+  max_height: {
+    type: "number",
+    description: "Cap the output height in pixels (default 4000). Only applies to full_page.",
+  },
   format: { type: "string", enum: ["png", "jpeg"], description: "Default png." },
   quality: { type: "number", description: "JPEG quality 1-100 (default 80)." },
 } as const;
@@ -80,10 +102,7 @@ function errorTail(mark: number): string {
   if (!errors.length) return "";
   const lines = collapse(errors);
   const shown = lines.slice(0, 8).join("\n");
-  const rest =
-    lines.length > 8
-      ? `\n  … ${lines.length - 8} more — call browser_diagnostics`
-      : "";
+  const rest = lines.length > 8 ? `\n  … ${lines.length - 8} more — call browser_diagnostics` : "";
   return `\n\n⚠ ${errors.length} error${errors.length === 1 ? "" : "s"} during this action:\n${shown}${rest}`;
 }
 
@@ -171,9 +190,7 @@ async function emulationFrom(args: any): Promise<string[]> {
   }
   if (args.pwa_overlay !== undefined) patch.pwaOverlay = Boolean(args.pwa_overlay);
   if (args.safe_area !== undefined) {
-    patch.safeArea = args.safe_area
-      ? { ...IPHONE_SAFE_AREA, ...args.safe_area }
-      : undefined;
+    patch.safeArea = args.safe_area ? { ...IPHONE_SAFE_AREA, ...args.safe_area } : undefined;
     changes.push("safe-area insets set");
   }
 
@@ -196,25 +213,42 @@ const CORE_TOOLS: Tool[] = [
         wait_until: {
           type: "string",
           enum: ["load", "domcontentloaded", "networkidle0", "networkidle2"],
-          description: "Navigation completion signal. Default domcontentloaded, then a short network-quiet wait.",
+          description:
+            "Navigation completion signal. Default domcontentloaded, then a short network-quiet wait.",
         },
         reload: { type: "boolean", description: "Reload the current page instead of navigating." },
         width: { type: "number", description: "Viewport width (default 1280)." },
         height: { type: "number", description: "Viewport height (default 800)." },
-        device: { type: "string", description: "Emulate a known device, e.g. \"iPhone 15 Pro\", \"iPad Pro\", \"Pixel 5\". Pass \"\" to clear." },
+        device: {
+          type: "string",
+          description:
+            'Emulate a known device, e.g. "iPhone 15 Pro", "iPad Pro", "Pixel 5". Pass "" to clear.',
+        },
         dark: { type: "boolean", description: "Emulate prefers-color-scheme: dark." },
         reduced_motion: { type: "boolean", description: "Emulate prefers-reduced-motion: reduce." },
-        pwa: { type: "boolean", description: "iOS standalone PWA: display-mode:standalone, navigator.standalone, real env(safe-area-inset-*) via CDP, and an iPhone viewport." },
-        pwa_overlay: { type: "boolean", description: "Tint the safe-area bars so they are visible in screenshots. Default true." },
+        pwa: {
+          type: "boolean",
+          description:
+            "iOS standalone PWA: display-mode:standalone, navigator.standalone, real env(safe-area-inset-*) via CDP, and an iPhone viewport.",
+        },
+        pwa_overlay: {
+          type: "boolean",
+          description: "Tint the safe-area bars so they are visible in screenshots. Default true.",
+        },
         safe_area: {
           type: "object",
           description: "Explicit safe-area insets in px.",
           properties: {
-            top: { type: "number" }, bottom: { type: "number" },
-            left: { type: "number" }, right: { type: "number" },
+            top: { type: "number" },
+            bottom: { type: "number" },
+            left: { type: "number" },
+            right: { type: "number" },
           },
         },
-        snapshot: { type: "boolean", description: "Also return the element tree (see browser_snapshot)." },
+        snapshot: {
+          type: "boolean",
+          description: "Also return the element tree (see browser_snapshot).",
+        },
       },
     },
   },
@@ -225,7 +259,12 @@ const CORE_TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        mode: { type: "string", enum: ["interactive", "full"], description: "interactive (default) lists controls and structure; full also includes body text." },
+        mode: {
+          type: "string",
+          enum: ["interactive", "full"],
+          description:
+            "interactive (default) lists controls and structure; full also includes body text.",
+        },
         root: { type: "string", description: "CSS selector to scope the snapshot to one subtree." },
         max_chars: { type: "number", description: "Output cap (default 8000)." },
       },
@@ -248,54 +287,89 @@ const CORE_TOOLS: Tool[] = [
       properties: {
         ...TARGET_PROPS,
         ...WAIT_PROPS,
-        action: { type: "string", enum: ["click", "double", "right", "hover"], description: "Default click." },
-        screenshot: { type: "boolean", description: "Return a screenshot of the result. Default false." },
-        snapshot: { type: "boolean", description: "Return the refreshed element tree. Default false." },
+        action: {
+          type: "string",
+          enum: ["click", "double", "right", "hover"],
+          description: "Default click.",
+        },
+        screenshot: {
+          type: "boolean",
+          description: "Return a screenshot of the result. Default false.",
+        },
+        snapshot: {
+          type: "boolean",
+          description: "Return the refreshed element tree. Default false.",
+        },
       },
     },
   },
   {
     name: "browser_type",
-    description: "Type into a field in the live session. Set submit:true to press Enter afterwards.",
+    description:
+      "Type into a field in the live session. Set submit:true to press Enter afterwards.",
     inputSchema: {
       type: "object",
       properties: {
         ...TARGET_PROPS,
         ...WAIT_PROPS,
         text: { type: "string", description: "Text to type." },
-        clear: { type: "boolean", description: "Select and delete the existing value first. Default false." },
+        clear: {
+          type: "boolean",
+          description: "Select and delete the existing value first. Default false.",
+        },
         submit: { type: "boolean", description: "Press Enter after typing. Default false." },
-        delay: { type: "number", description: "Per-keystroke delay in ms, for inputs that debounce." },
-        screenshot: { type: "boolean", description: "Return a screenshot of the result. Default false." },
+        delay: {
+          type: "number",
+          description: "Per-keystroke delay in ms, for inputs that debounce.",
+        },
+        screenshot: {
+          type: "boolean",
+          description: "Return a screenshot of the result. Default false.",
+        },
       },
       required: ["text"],
     },
   },
   {
     name: "browser_press",
-    description: "Press a key, e.g. Enter, Escape, Tab, ArrowDown, Control+A. Optionally focus an element first.",
+    description:
+      "Press a key, e.g. Enter, Escape, Tab, ArrowDown, Control+A. Optionally focus an element first.",
     inputSchema: {
       type: "object",
       properties: {
         ...TARGET_PROPS,
         ...WAIT_PROPS,
         key: { type: "string", description: "Key or chord, e.g. Enter, Escape, Meta+K." },
-        screenshot: { type: "boolean", description: "Return a screenshot of the result. Default false." },
+        screenshot: {
+          type: "boolean",
+          description: "Return a screenshot of the result. Default false.",
+        },
       },
       required: ["key"],
     },
   },
   {
     name: "browser_scroll",
-    description: "Scroll the page to the top or bottom, by a pixel offset, or to bring an element into view.",
+    description:
+      "Scroll the page to the top or bottom, by a pixel offset, or to bring an element into view.",
     inputSchema: {
       type: "object",
       properties: {
         ...TARGET_PROPS,
-        to: { type: "string", enum: ["top", "bottom"], description: "Scroll to one end of the page." },
-        dy: { type: "number", description: "Scroll down by this many pixels (negative scrolls up)." },
+        to: {
+          type: "string",
+          enum: ["top", "bottom"],
+          description: "Scroll to one end of the page.",
+        },
+        dy: {
+          type: "number",
+          description: "Scroll down by this many pixels (negative scrolls up).",
+        },
         dx: { type: "number", description: "Scroll right by this many pixels." },
-        screenshot: { type: "boolean", description: "Return a screenshot after scrolling. Default false." },
+        screenshot: {
+          type: "boolean",
+          description: "Return a screenshot after scrolling. Default false.",
+        },
       },
     },
   },
@@ -306,8 +380,15 @@ const CORE_TOOLS: Tool[] = [
       type: "object",
       properties: {
         ...TARGET_PROPS,
-        values: { type: "array", items: { type: "string" }, description: "Option values (not labels) to select." },
-        screenshot: { type: "boolean", description: "Return a screenshot of the result. Default false." },
+        values: {
+          type: "array",
+          items: { type: "string" },
+          description: "Option values (not labels) to select.",
+        },
+        screenshot: {
+          type: "boolean",
+          description: "Return a screenshot of the result. Default false.",
+        },
       },
       required: ["values"],
     },
@@ -319,7 +400,10 @@ const CORE_TOOLS: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        expression: { type: "string", description: "Expression, or a statement block containing `return`." },
+        expression: {
+          type: "string",
+          description: "Expression, or a statement block containing `return`.",
+        },
         max_chars: { type: "number", description: "Result cap (default 4000)." },
       },
       required: ["expression"],
@@ -333,8 +417,15 @@ const CORE_TOOLS: Tool[] = [
       type: "object",
       properties: {
         ...NAV_PROPS,
-        since: { type: "string", enum: ["navigation", "session"], description: "Default navigation." },
-        include_logs: { type: "boolean", description: "Include console warnings, not just errors. Default true." },
+        since: {
+          type: "string",
+          enum: ["navigation", "session"],
+          description: "Default navigation.",
+        },
+        include_logs: {
+          type: "boolean",
+          description: "Include console warnings, not just errors. Default true.",
+        },
         limit: { type: "number", description: "Max entries per section (default 40)." },
       },
     },
@@ -348,10 +439,21 @@ const CORE_TOOLS: Tool[] = [
       properties: {
         ...NAV_PROPS,
         ...WAIT_PROPS,
-        widths: { type: "array", items: { type: "number" }, description: "Viewport widths (default [375, 768, 1280]). Max 4." },
+        widths: {
+          type: "array",
+          items: { type: "number" },
+          description: "Viewport widths (default [375, 768, 1280]). Max 4.",
+        },
         height: { type: "number", description: "Viewport height for each capture (default 900)." },
-        full_page: { type: "boolean", description: "Capture full scroll height at each width. Default false." },
-        max_width: { type: "number", description: "Cap each output image's width (default 600 here, to keep the set affordable)." },
+        full_page: {
+          type: "boolean",
+          description: "Capture full scroll height at each width. Default false.",
+        },
+        max_width: {
+          type: "number",
+          description:
+            "Cap each output image's width (default 600 here, to keep the set affordable).",
+        },
         format: { type: "string", enum: ["png", "jpeg"] },
       },
     },
@@ -366,10 +468,16 @@ const CORE_TOOLS: Tool[] = [
         ...NAV_PROPS,
         ...TARGET_PROPS,
         ...WAIT_PROPS,
-        name: { type: "string", description: "Baseline name, e.g. \"dashboard-desktop\"." },
+        name: { type: "string", description: 'Baseline name, e.g. "dashboard-desktop".' },
         update: { type: "boolean", description: "Overwrite the baseline with the current render." },
-        threshold: { type: "number", description: "Per-pixel colour tolerance 0-1 (default 0.1). Higher ignores more." },
-        include_image: { type: "boolean", description: "Return the highlighted diff image. Default true." },
+        threshold: {
+          type: "number",
+          description: "Per-pixel colour tolerance 0-1 (default 0.1). Higher ignores more.",
+        },
+        include_image: {
+          type: "boolean",
+          description: "Return the highlighted diff image. Default true.",
+        },
         full_page: SHOT_PROPS.full_page,
         max_width: SHOT_PROPS.max_width,
         max_height: SHOT_PROPS.max_height,
@@ -388,7 +496,8 @@ const CORE_TOOLS: Tool[] = [
 const LEGACY: Tool[] = [
   {
     name: "screenshot_page",
-    description: "Legacy one-shot: navigate and screenshot. Prefer browser_navigate + browser_screenshot.",
+    description:
+      "Legacy one-shot: navigate and screenshot. Prefer browser_navigate + browser_screenshot.",
     inputSchema: {
       type: "object",
       properties: {
@@ -396,7 +505,10 @@ const LEGACY: Tool[] = [
         base_url: NAV_PROPS.base_url,
         port: NAV_PROPS.port,
         mobile: { type: "boolean" },
-        pwa: { type: "boolean", description: "Simulate an iOS standalone PWA with real safe-area insets." },
+        pwa: {
+          type: "boolean",
+          description: "Simulate an iOS standalone PWA with real safe-area insets.",
+        },
         wait_ms: WAIT_PROPS.wait_ms,
       },
       required: ["route"],
@@ -404,7 +516,8 @@ const LEGACY: Tool[] = [
   },
   {
     name: "type_into_element",
-    description: "Legacy one-shot: navigate, type into a selector, screenshot. Prefer browser_type.",
+    description:
+      "Legacy one-shot: navigate, type into a selector, screenshot. Prefer browser_type.",
     inputSchema: {
       type: "object",
       properties: {
@@ -420,7 +533,8 @@ const LEGACY: Tool[] = [
   },
   {
     name: "inspect_network_errors",
-    description: "Legacy one-shot: navigate and report console/network errors. Prefer browser_diagnostics.",
+    description:
+      "Legacy one-shot: navigate and report console/network errors. Prefer browser_diagnostics.",
     inputSchema: {
       type: "object",
       properties: {
@@ -451,10 +565,7 @@ async function snapshotText(args: any): Promise<string> {
     mode: args.mode === "full" ? "full" : "interactive",
     root: args.root,
   };
-  const payload = (await page.evaluate(
-    collectSnapshot,
-    snapshotArgs,
-  )) as SnapshotPayload;
+  const payload = (await page.evaluate(collectSnapshot, snapshotArgs)) as SnapshotPayload;
   return formatSnapshot(payload, args.max_chars ?? 8000);
 }
 
@@ -464,9 +575,7 @@ async function pageHeading(): Promise<string> {
   return `${title || "(untitled)"} — ${page.url()}`;
 }
 
-async function maybeAttachments(
-  args: any,
-): Promise<{ text: string; images: ImageContent[] }> {
+async function maybeAttachments(args: any): Promise<{ text: string; images: ImageContent[] }> {
   const images: ImageContent[] = [];
   let text = "";
   if (args.screenshot) {
@@ -478,17 +587,11 @@ async function maybeAttachments(
   return { text, images };
 }
 
-function buildDiagnostics(
-  since: number,
-  includeLogs: boolean,
-  limit: number,
-): string {
+function buildDiagnostics(since: number, includeLogs: boolean, limit: number): string {
   const events = session.eventsSince(since);
   const network = events.filter((e) => e.kind === "network");
   const console_ = events.filter(
-    (e) =>
-      e.kind === "pageerror" ||
-      (e.kind === "console" && (includeLogs || e.type === "error")),
+    (e) => e.kind === "pageerror" || (e.kind === "console" && (includeLogs || e.type === "error")),
   );
   const dialogs = events.filter((e) => e.kind === "dialog");
 
@@ -496,8 +599,7 @@ function buildDiagnostics(
     if (!list.length) return `[${title}]\n  ${empty}`;
     const lines = collapse(list);
     const shown = lines.slice(-limit).join("\n");
-    const more =
-      lines.length > limit ? `\n  … ${lines.length - limit} older entries omitted` : "";
+    const more = lines.length > limit ? `\n  … ${lines.length - limit} older entries omitted` : "";
     return `[${title}] ${list.length}\n${shown}${more}`;
   };
 
@@ -519,7 +621,10 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
         // Changing device/viewport makes puppeteer reload, which would re-run
         // the current app for nothing and double its errors in the report.
         const willNavigate = Boolean(args.reload) || hasTarget(args) || !session.isOpen();
-        if (willNavigate && (args.device !== undefined || args.width || args.height || args.pwa !== undefined)) {
+        if (
+          willNavigate &&
+          (args.device !== undefined || args.width || args.height || args.pwa !== undefined)
+        ) {
           await session.blank();
         }
         const changes = await emulationFrom(args);
@@ -545,11 +650,9 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
         const navigated = await navigateIfTargeted(args);
         await extraWait(args, navigated);
         const shot = await capture({ ...targetOf(args), ...args });
-        return ok(
-          `${await pageHeading()}\nScreenshot: ${shotCaption(shot)}`,
-          mark,
-          [imageOf(shot)],
-        );
+        return ok(`${await pageHeading()}\nScreenshot: ${shotCaption(shot)}`, mark, [
+          imageOf(shot),
+        ]);
       }
 
       case "browser_click": {
@@ -624,24 +727,16 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
         } else if (args.to === "top") {
           await page.evaluate(() => window.scrollTo(0, 0));
         } else if (args.to === "bottom") {
-          await page.evaluate(() =>
-            window.scrollTo(0, document.documentElement.scrollHeight),
-          );
+          await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
         } else {
           const dx = Number(args.dx) || 0;
           const dy = Number(args.dy) || 0;
-          await page.evaluate(
-            (x: number, y: number) => window.scrollBy(x, y),
-            dx,
-            dy,
-          );
+          await page.evaluate((x: number, y: number) => window.scrollBy(x, y), dx, dy);
         }
         await sleep(150);
         const position = await page.evaluate(() => ({
           y: Math.round(window.scrollY),
-          max: Math.round(
-            document.documentElement.scrollHeight - window.innerHeight,
-          ),
+          max: Math.round(document.documentElement.scrollHeight - window.innerHeight),
         }));
         const { text, images } = await maybeAttachments(args);
         return ok(`Scrolled to y=${position.y} of ${position.max}${text}`, mark, images);
@@ -678,11 +773,7 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
       case "browser_diagnostics": {
         await navigateIfTargeted(args);
         const since = args.since === "session" ? 0 : session.lastNavSeq;
-        const report = buildDiagnostics(
-          since,
-          args.include_logs !== false,
-          args.limit ?? 40,
-        );
+        const report = buildDiagnostics(since, args.include_logs !== false, args.limit ?? 40);
         const scope = args.since === "session" ? "this session" : "the last navigation";
         return {
           content: [
@@ -697,9 +788,10 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
       case "browser_responsive": {
         const navigated = await navigateIfTargeted(args);
         await extraWait(args, navigated);
-        const widths: number[] = Array.isArray(args.widths) && args.widths.length
-          ? args.widths.slice(0, 4).map(Number)
-          : [375, 768, 1280];
+        const widths: number[] =
+          Array.isArray(args.widths) && args.widths.length
+            ? args.widths.slice(0, 4).map(Number)
+            : [375, 768, 1280];
         const shots = await captureBreakpoints(widths, {
           full_page: args.full_page,
           max_width: args.max_width ?? 600,
@@ -828,11 +920,7 @@ export async function callTool(name: string, rawArgs: unknown): Promise<ToolResu
 
       case "inspect_network_errors": {
         await session.navigate(resolveUrl(args));
-        const report = buildDiagnostics(
-          session.lastNavSeq,
-          args.include_logs !== false,
-          40,
-        );
+        const report = buildDiagnostics(session.lastNavSeq, args.include_logs !== false, 40);
         return {
           content: [
             {

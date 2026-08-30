@@ -73,9 +73,20 @@ async function sqliteTable(driver: Driver, ref: TableRef): Promise<string> {
   const columns = await driver.query(`pragma table_info(${ident})`);
   const colRows = columns.rows.map((r) => {
     const [, name, type, notnull, dflt, pk] = r as [
-      number, string, string, number, unknown, number,
+      number,
+      string,
+      string,
+      number,
+      unknown,
+      number,
     ];
-    return [name, type || "—", notnull ? "NOT NULL" : "", dflt ?? "", pk ? `PK${pk > 1 ? ` (${pk})` : ""}` : ""];
+    return [
+      name,
+      type || "—",
+      notnull ? "NOT NULL" : "",
+      dflt ?? "",
+      pk ? `PK${pk > 1 ? ` (${pk})` : ""}` : "",
+    ];
   });
   sections.push(
     `[COLUMNS]\n${renderTable({
@@ -214,9 +225,7 @@ async function postgresTable(driver: Driver, ref: TableRef): Promise<string> {
 
 export async function describeTable(driver: Driver, table: string): Promise<string> {
   const ref = parseTableRef(table);
-  return driver.dialect === "sqlite"
-    ? sqliteTable(driver, ref)
-    : postgresTable(driver, ref);
+  return driver.dialect === "sqlite" ? sqliteTable(driver, ref) : postgresTable(driver, ref);
 }
 
 // --- Search -----------------------------------------------------------------

@@ -11,9 +11,7 @@ function run(cmd, args) {
 }
 
 const rl = createInterface({ input, output });
-const answer = (await rl.question("Bump type [patch/minor/major]: "))
-  .trim()
-  .toLowerCase();
+const answer = (await rl.question("Bump type [patch/minor/major]: ")).trim().toLowerCase();
 rl.close();
 
 if (!["patch", "minor", "major"].includes(answer)) {

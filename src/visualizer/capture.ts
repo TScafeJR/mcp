@@ -251,8 +251,7 @@ function imageSize(buf: Buffer): { width: number; height: number } | null {
       }
       const marker = buf[i + 1];
       const isStartOfFrame =
-        marker >= 0xc0 && marker <= 0xcf &&
-        marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+        marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
       if (isStartOfFrame) {
         return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
       }

@@ -35,7 +35,7 @@ servers it actually needs. The invocation is `npx -y <package> <bin>`:
 
 `npx <package> <name>` works because the package ships a bin called `mcp` —
 npm derives the command from the unscoped package name, so a multi-bin package
-without one fails with *"could not determine executable to run"*. That `mcp` bin
+without one fails with _"could not determine executable to run"_. That `mcp` bin
 is a dispatcher: it takes the server name and hands off. The explicit
 `npx -y -p @tscafejr/mcp mcp-db` form works too and does not depend on it.
 
@@ -46,11 +46,11 @@ that server's `env` to skip it.
 
 ## Available servers
 
-| Bin              | Source                      | Description                                                                                                                                     |
-| ---------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bin              | Source                      | Description                                                                                                                                                                                                                |
+| ---------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mcp-visualizer` | `src/servers/visualizer.ts` | Drives a real browser against a running web app: navigate, inspect, click, type, screenshot, diagnose and visually diff. Framework-agnostic — Vite, Next.js, CRA, Netlify dev, deploy previews, anything that serves HTTP. |
-| `mcp-db`         | `src/servers/db.ts`         | Read-only SQL against SQLite or Postgres: schema introspection, queries, query plans, and migration drift. Writes are impossible by construction. |
-| `mcp`            | `src/servers/mcp.ts`        | Dispatcher, not a server. Exists so `npx <package> <name>` resolves — see [Troubleshooting](#troubleshooting). |
+| `mcp-db`         | `src/servers/db.ts`         | Read-only SQL against SQLite or Postgres: schema introspection, queries, query plans, and migration drift. Writes are impossible by construction.                                                                          |
+| `mcp`            | `src/servers/mcp.ts`        | Dispatcher, not a server. Exists so `npx <package> <name>` resolves — see [Troubleshooting](#troubleshooting).                                                                                                             |
 
 **Requirements:** Node 18+ generally; `mcp-db`'s SQLite support needs Node 22.5+
 for the built-in `node:sqlite` module.
@@ -78,7 +78,7 @@ Two things make the tools cheap to use:
 
 Console errors, uncaught exceptions and 4xx/5xx responses are recorded
 continuously and appended to **every** tool result, so a screenshot of a blank
-page tells you *why* it is blank.
+page tells you _why_ it is blank.
 
 ### Target resolution
 
@@ -95,21 +95,21 @@ A call with no target at all acts on the page already open.
 
 ### Environment
 
-| Variable                       | Default                  | Purpose                                                        |
-| ------------------------------ | ------------------------ | -------------------------------------------------------------- |
-| `MCP_DEV_SERVER_URL`           | —                        | Full base URL.                                                  |
-| `MCP_DEV_SERVER_HOST`          | `localhost`              | Host used with `MCP_DEV_SERVER_PORT`.                           |
-| `MCP_DEV_SERVER_PORT`          | —                        | Port on that host.                                              |
-| `MCP_DEV_SERVER_HEADERS`       | —                        | JSON object of extra request headers (preview bypass tokens).   |
-| `MCP_DEV_SERVER_BASIC_AUTH`    | —                        | `user:pass` for password-protected deploy previews.             |
-| `MCP_VISUALIZER_IDLE_MS`       | `300000`                 | Idle time before the browser closes itself.                     |
-| `MCP_VISUALIZER_WIDTH/HEIGHT`  | `1280` / `800`           | Default desktop viewport.                                       |
-| `MCP_VISUALIZER_MAX_WIDTH`     | `1000`                   | Default screenshot width cap.                                   |
-| `MCP_VISUALIZER_MAX_HEIGHT`    | `4000`                   | Default cap for `full_page` captures.                           |
-| `MCP_VISUALIZER_BASELINE_DIR`  | `./.visualizer-baselines`| Where `browser_diff` stores baselines.                          |
-| `MCP_VISUALIZER_HEADFUL`       | —                        | `1` to watch the browser drive itself.                          |
-| `MCP_VISUALIZER_DIALOGS`       | `dismiss`                | `accept` to accept `alert()` / `confirm()` instead.             |
-| `MCP_VISUALIZER_LEGACY_TOOLS`  | —                        | `0` to hide the three legacy tool names.                        |
+| Variable                      | Default                   | Purpose                                                       |
+| ----------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `MCP_DEV_SERVER_URL`          | —                         | Full base URL.                                                |
+| `MCP_DEV_SERVER_HOST`         | `localhost`               | Host used with `MCP_DEV_SERVER_PORT`.                         |
+| `MCP_DEV_SERVER_PORT`         | —                         | Port on that host.                                            |
+| `MCP_DEV_SERVER_HEADERS`      | —                         | JSON object of extra request headers (preview bypass tokens). |
+| `MCP_DEV_SERVER_BASIC_AUTH`   | —                         | `user:pass` for password-protected deploy previews.           |
+| `MCP_VISUALIZER_IDLE_MS`      | `300000`                  | Idle time before the browser closes itself.                   |
+| `MCP_VISUALIZER_WIDTH/HEIGHT` | `1280` / `800`            | Default desktop viewport.                                     |
+| `MCP_VISUALIZER_MAX_WIDTH`    | `1000`                    | Default screenshot width cap.                                 |
+| `MCP_VISUALIZER_MAX_HEIGHT`   | `4000`                    | Default cap for `full_page` captures.                         |
+| `MCP_VISUALIZER_BASELINE_DIR` | `./.visualizer-baselines` | Where `browser_diff` stores baselines.                        |
+| `MCP_VISUALIZER_HEADFUL`      | —                         | `1` to watch the browser drive itself.                        |
+| `MCP_VISUALIZER_DIALOGS`      | `dismiss`                 | `accept` to accept `alert()` / `confirm()` instead.           |
+| `MCP_VISUALIZER_LEGACY_TOOLS` | —                         | `0` to hide the three legacy tool names.                      |
 
 Example client configs:
 
@@ -140,23 +140,23 @@ Example client configs:
 
 **Look**
 
-| Tool                 | Notes                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| Tool                 | Notes                                                                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `browser_navigate`   | Open a route. Also carries emulation: `width`/`height`, `device`, `dark`, `reduced_motion`, `pwa`, `safe_area`. Called with only emulation options it reconfigures the open page. |
-| `browser_snapshot`   | Text outline with `[ref=eN]` handles. `mode: full` adds body text; `root` scopes to a subtree.            |
-| `browser_screenshot` | Viewport by default. `selector`/`ref` clips to one element; `full_page`, `max_width`, `format`, `quality`. |
-| `browser_responsive` | The same page at several widths in one call (default 375 / 768 / 1280).                                   |
-| `browser_diff`       | Compare against a saved baseline; reports changed pixel count, percentage, bounding box and a diff image. |
+| `browser_snapshot`   | Text outline with `[ref=eN]` handles. `mode: full` adds body text; `root` scopes to a subtree.                                                                                    |
+| `browser_screenshot` | Viewport by default. `selector`/`ref` clips to one element; `full_page`, `max_width`, `format`, `quality`.                                                                        |
+| `browser_responsive` | The same page at several widths in one call (default 375 / 768 / 1280).                                                                                                           |
+| `browser_diff`       | Compare against a saved baseline; reports changed pixel count, percentage, bounding box and a diff image.                                                                         |
 
 **Act**
 
-| Tool             | Notes                                                                          |
-| ---------------- | -------------------------------------------------------------------------------- |
-| `browser_click`  | `action: click \| double \| right \| hover`.                                     |
+| Tool             | Notes                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `browser_click`  | `action: click \| double \| right \| hover`.                                         |
 | `browser_type`   | `clear` to replace the value, `submit` to press Enter, `delay` for debounced inputs. |
-| `browser_press`  | Keys and chords — `Enter`, `Escape`, `Meta+K`.                                   |
-| `browser_scroll` | `to: top \| bottom`, a `dy` offset, or scroll an element into view.              |
-| `browser_select` | Choose `<select>` options by value.                                              |
+| `browser_press`  | Keys and chords — `Enter`, `Escape`, `Meta+K`.                                       |
+| `browser_scroll` | `to: top \| bottom`, a `dy` offset, or scroll an element into view.                  |
+| `browser_select` | Choose `<select>` options by value.                                                  |
 
 Every action tool takes `ref` / `selector` / `find_text` to target an element,
 `wait_for` (a selector, or `text=Some copy`) to wait afterwards, and optional
@@ -164,11 +164,11 @@ Every action tool takes `ref` / `selector` / `find_text` to target an element,
 
 **Diagnose**
 
-| Tool                  | Notes                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| `browser_eval`        | Run JS in the page and get JSON back. Assert app state without spending a screenshot.       |
+| Tool                  | Notes                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| `browser_eval`        | Run JS in the page and get JSON back. Assert app state without spending a screenshot.             |
 | `browser_diagnostics` | Console errors/warnings, exceptions, failed and 4xx/5xx requests. `since: navigation \| session`. |
-| `browser_close`       | Drop the session — cookies, storage and emulation with it.                                  |
+| `browser_close`       | Drop the session — cookies, storage and emulation with it.                                        |
 
 `screenshot_page`, `type_into_element` and `inspect_network_errors` still work as
 one-shot wrappers over the same engine. Set `MCP_VISUALIZER_LEGACY_TOOLS=0` to
@@ -206,7 +206,7 @@ Two independent layers, both verified:
 1. **The connection is read-only.** SQLite is opened with `readOnly: true`;
    every Postgres statement runs inside a `BEGIN READ ONLY` transaction that is
    rolled back afterwards. `DELETE`, `UPDATE`, `CREATE` and `DROP` all fail at
-   the engine — *"cannot execute DELETE in a read-only transaction"*.
+   the engine — _"cannot execute DELETE in a read-only transaction"_.
 2. **A statement gate in front of it.** Only `SELECT`, `WITH`, `EXPLAIN`,
    `SHOW`, `TABLE` and `VALUES` are accepted, chained statements are refused,
    and a data-modifying CTE — `WITH x AS (DELETE ... RETURNING ...)`, which
@@ -217,15 +217,15 @@ The gate exists for clear error messages; the engine is the actual guarantee.
 
 ### Configuration
 
-| Variable                   | Default              | Purpose                                                   |
-| -------------------------- | -------------------- | ---------------------------------------------------------- |
-| `MCP_DB_URL`               | *(required)*         | `postgresql://…`, `sqlite:./path.db`, or a path to a file. |
-| `MCP_DB_MIGRATIONS_DIR`    | auto-detected        | Overrides migration directory discovery.                    |
-| `MCP_DB_MAX_ROWS`          | `50`                 | Default row cap for `db_query`.                             |
-| `MCP_DB_MAX_CHARS`         | `8000`               | Output cap per result.                                      |
-| `MCP_DB_MAX_CELL`          | `60`                 | Per-cell truncation width.                                  |
-| `MCP_DB_TIMEOUT_MS`        | `10000`              | Postgres `statement_timeout`.                               |
-| `MCP_DB_BUSY_TIMEOUT_MS`   | `3000`               | SQLite `busy_timeout` — how long to wait out a concurrent writer. |
+| Variable                 | Default       | Purpose                                                           |
+| ------------------------ | ------------- | ----------------------------------------------------------------- |
+| `MCP_DB_URL`             | _(required)_  | `postgresql://…`, `sqlite:./path.db`, or a path to a file.        |
+| `MCP_DB_MIGRATIONS_DIR`  | auto-detected | Overrides migration directory discovery.                          |
+| `MCP_DB_MAX_ROWS`        | `50`          | Default row cap for `db_query`.                                   |
+| `MCP_DB_MAX_CHARS`       | `8000`        | Output cap per result.                                            |
+| `MCP_DB_MAX_CELL`        | `60`          | Per-cell truncation width.                                        |
+| `MCP_DB_TIMEOUT_MS`      | `10000`       | Postgres `statement_timeout`.                                     |
+| `MCP_DB_BUSY_TIMEOUT_MS` | `3000`        | SQLite `busy_timeout` — how long to wait out a concurrent writer. |
 
 `MCP_DB_URL` accepts the `sqlite:data/app.db?mode=rwc` form sqlx uses — the
 query string is ignored and relative paths resolve against the server's working
@@ -250,16 +250,61 @@ all.
 
 ### Tools
 
-| Tool             | Notes                                                                                                              |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `db_schema`      | No args: every table and view with row counts. `table`: columns, types, nullability, defaults, keys, indexes, foreign keys **in both directions**, and the DDL. `search`: match table and column names. |
-| `db_query`       | A single read-only statement. Results are capped by wrapping the query, and one extra row is fetched so "exactly 3 rows" is distinguishable from "the first 3 of many". |
-| `db_explain`     | Query plan. `analyze: true` (Postgres) executes for real timings — still inside the read-only transaction.           |
-| `db_migrations`  | Migration files on disk versus what the database applied. Reports pending migrations, ones applied but **missing from disk** (you switched branches), and failures. Understands sqlx, Supabase, Drizzle and plain `schema_migrations`. |
+| Tool            | Notes                                                                                                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db_schema`     | No args: every table and view with row counts. `table`: columns, types, nullability, defaults, keys, indexes, foreign keys **in both directions**, and the DDL. `search`: match table and column names.                                |
+| `db_query`      | A single read-only statement. Results are capped by wrapping the query, and one extra row is fetched so "exactly 3 rows" is distinguishable from "the first 3 of many".                                                                |
+| `db_explain`    | Query plan. `analyze: true` (Postgres) executes for real timings — still inside the read-only transaction.                                                                                                                             |
+| `db_relations`  | How tables connect. No args: every relationship. `table`: everything touching one table. `from` + `to`: the shortest join path, emitted as runnable SQL.                                                                               |
+| `db_policies`   | Postgres row-level security — which tables have RLS on, and each policy's command, roles and `USING` / `WITH CHECK` expressions.                                                                                                       |
+| `db_migrations` | Migration files on disk versus what the database applied. Reports pending migrations, ones applied but **missing from disk** (you switched branches), and failures. Understands sqlx, Supabase, Drizzle and plain `schema_migrations`. |
 
 SQLite support uses Node's built-in `node:sqlite`, so it adds no dependency, but
 it needs **Node 22.5 or newer**. Postgres uses `pg`, imported lazily so a
 SQLite-only project never loads it.
+
+### Relationships without foreign keys
+
+`db_relations` reads declared foreign keys, and then fills the gaps by matching
+the `<table>_id` column convention — `player_stat.player_id` is reported as
+pointing at `player` even with no `REFERENCES` clause. Singular and plural forms
+both resolve, so `user_id` finds `users`. Every link is labelled `fk` or
+`inferred`; **inferred links are a guess from a name, so confirm one before
+depending on it.**
+
+This is what makes the tool useful on schemas that lean on convention rather
+than constraints. Join paths prefer declared keys and fall back to inferred
+links only when no declared route exists:
+
+```
+public.activity → public.teams in 2 hops
+
+  activity.link_id → links.id [inferred]
+  links.team_id → teams.id [fk]
+
+SELECT *
+FROM public.activity a
+JOIN public.links l ON a.link_id = l.id
+JOIN public.teams t ON l.team_id = t.id
+```
+
+### Row-level security
+
+`db_policies` exists for the failure mode where a query works for you and
+returns nothing for a real user. It flags both silent states:
+
+- **RLS enabled with no policies** — every row is denied to non-owner roles,
+  including `anon` and `authenticated`. Queries return empty rather than
+  erroring, so this looks like missing data.
+- **RLS off** — no row filtering at all; any role with table privileges reads
+  every row.
+
+```
+table                rls      policies  note
+public.activity      OFF      0         unfiltered
+public.api_keys      enabled  0         DENIES ALL
+public.links         enabled  2
+```
 
 ---
 
@@ -342,6 +387,20 @@ error names the absolute path it tried.
 That's it — `chmod-bins.js` reads `package.json` on every build and marks all bin outputs executable, so new entries pick up automatically.
 
 Add the new row to the table above so consumers know what's available.
+
+## Formatting
+
+Prettier, configured in `.prettierrc.json` — 100 columns, double quotes, trailing
+commas, two-space indent.
+
+```sh
+npm run format         # rewrite
+npm run format:check   # verify, non-zero exit if anything is unformatted
+```
+
+Markdown uses `embeddedLanguageFormatting: "off"` so the annotated JSON config
+examples in this file survive — several carry `//` comments that are not valid
+JSON and would otherwise fail to parse.
 
 ## Releasing
 

@@ -24,13 +24,9 @@ export function collectSnapshot(opts: SnapshotArgs): SnapshotPayload {
   const REF = "data-mcp-ref";
   const MAX_LINES = 800;
 
-  document
-    .querySelectorAll(`[${REF}]`)
-    .forEach((el) => el.removeAttribute(REF));
+  document.querySelectorAll(`[${REF}]`).forEach((el) => el.removeAttribute(REF));
 
-  const scope: Element | null = opts.root
-    ? document.querySelector(opts.root)
-    : document.body;
+  const scope: Element | null = opts.root ? document.querySelector(opts.root) : document.body;
 
   if (!scope) {
     return {
@@ -44,31 +40,75 @@ export function collectSnapshot(opts: SnapshotArgs): SnapshotPayload {
   }
 
   const INTERACTIVE_ROLES = new Set([
-    "link", "button", "checkbox", "radio", "slider", "combobox", "listbox",
-    "textbox", "searchbox", "file", "tab", "menuitem", "menuitemcheckbox",
-    "menuitemradio", "switch", "spinbutton", "option",
+    "link",
+    "button",
+    "checkbox",
+    "radio",
+    "slider",
+    "combobox",
+    "listbox",
+    "textbox",
+    "searchbox",
+    "file",
+    "tab",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "switch",
+    "spinbutton",
+    "option",
   ]);
   const STRUCTURAL_ROLES = new Set([
-    "heading", "navigation", "main", "banner", "contentinfo", "complementary",
-    "form", "dialog", "table", "region", "search", "alert", "status",
-    "tablist", "list", "img",
+    "heading",
+    "navigation",
+    "main",
+    "banner",
+    "contentinfo",
+    "complementary",
+    "form",
+    "dialog",
+    "table",
+    "region",
+    "search",
+    "alert",
+    "status",
+    "tablist",
+    "list",
+    "img",
   ]);
   const TAG_ROLES: Record<string, string> = {
-    nav: "navigation", main: "main", header: "banner", footer: "contentinfo",
-    aside: "complementary", form: "form", table: "table", img: "img",
-    dialog: "dialog", section: "region", ul: "list", ol: "list",
-    li: "listitem", summary: "button", option: "option",
+    nav: "navigation",
+    main: "main",
+    header: "banner",
+    footer: "contentinfo",
+    aside: "complementary",
+    form: "form",
+    table: "table",
+    img: "img",
+    dialog: "dialog",
+    section: "region",
+    ul: "list",
+    ol: "list",
+    li: "listitem",
+    summary: "button",
+    option: "option",
   };
   const INPUT_ROLES: Record<string, string> = {
-    checkbox: "checkbox", radio: "radio", range: "slider", submit: "button",
-    button: "button", reset: "button", image: "button", file: "file",
-    search: "searchbox", number: "spinbutton", hidden: "hidden",
+    checkbox: "checkbox",
+    radio: "radio",
+    range: "slider",
+    submit: "button",
+    button: "button",
+    reset: "button",
+    image: "button",
+    file: "file",
+    search: "searchbox",
+    number: "spinbutton",
+    hidden: "hidden",
   };
 
-  const clean = (s: string | null | undefined): string =>
-    (s || "").replace(/\s+/g, " ").trim();
-  const cap = (s: string, n: number): string =>
-    s.length > n ? `${s.slice(0, n - 1)}…` : s;
+  const clean = (s: string | null | undefined): string => (s || "").replace(/\s+/g, " ").trim();
+  const cap = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
   function visible(el: Element): boolean {
     if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
@@ -231,8 +271,7 @@ export function collectSnapshot(opts: SnapshotArgs): SnapshotPayload {
       if (actionable && role === "generic") role = "clickable";
 
       const structural = STRUCTURAL_ROLES.has(role) || role === "listitem";
-      const textual =
-        opts.mode === "full" && role === "generic" && ownText(child).length > 0;
+      const textual = opts.mode === "full" && role === "generic" && ownText(child).length > 0;
 
       let emitted = false;
       if (actionable || structural || textual) {
@@ -269,10 +308,7 @@ export function collectSnapshot(opts: SnapshotArgs): SnapshotPayload {
   };
 }
 
-export function formatSnapshot(
-  payload: SnapshotPayload,
-  maxChars: number,
-): string {
+export function formatSnapshot(payload: SnapshotPayload, maxChars: number): string {
   if (payload.error) return `Snapshot error: ${payload.error}`;
 
   const header = `${payload.title || "(untitled)"} — ${payload.url}`;

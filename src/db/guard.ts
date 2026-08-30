@@ -69,9 +69,7 @@ export function assertReadOnly(sql: string): void {
   if (!bare) throw new Error("Empty statement.");
 
   if (bare.includes(";")) {
-    throw new Error(
-      "Only one statement per call. Chained statements are rejected outright.",
-    );
+    throw new Error("Only one statement per call. Chained statements are rejected outright.");
   }
 
   const leader = bare.match(/^\(*\s*([a-z]+)/i)?.[1]?.toLowerCase() ?? "";

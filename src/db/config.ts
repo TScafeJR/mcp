@@ -81,10 +81,7 @@ export function resolveTarget(): DbTarget {
     if (filePath === ":memory:") {
       throw new Error("An in-memory SQLite database has nothing to inspect.");
     }
-    const absolute = path.resolve(
-      process.cwd(),
-      expandHome(decodeURIComponent(filePath)),
-    );
+    const absolute = path.resolve(process.cwd(), expandHome(decodeURIComponent(filePath)));
     if (!fs.existsSync(absolute)) {
       throw new Error(
         `No SQLite database at ${absolute}\n` +

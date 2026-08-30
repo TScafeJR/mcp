@@ -59,9 +59,7 @@ async function openSqlite(target: DbTarget): Promise<Driver> {
     },
     async query(sql, params = []) {
       const statement = db.prepare(sql);
-      const records = statement.all(
-        ...(params as never[]),
-      ) as Array<Record<string, unknown>>;
+      const records = statement.all(...(params as never[])) as Array<Record<string, unknown>>;
       let fallback: string[] = [];
       try {
         // Available in newer Node; gives column names even for empty results.
@@ -143,10 +141,7 @@ let cached: Driver | null = null;
 export async function getDriver(): Promise<Driver> {
   if (cached) return cached;
   const target = resolveTarget();
-  cached =
-    target.dialect === "sqlite"
-      ? await openSqlite(target)
-      : await openPostgres(target);
+  cached = target.dialect === "sqlite" ? await openSqlite(target) : await openPostgres(target);
   return cached;
 }
 
