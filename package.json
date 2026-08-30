@@ -6,6 +6,7 @@
   "author": "Tyrone Scafe",
   "type": "module",
   "bin": {
+    "mcp-db": "dist/servers/db.js",
     "mcp-visualizer": "dist/servers/visualizer.js"
   },
   "files": [
@@ -22,12 +23,14 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
+    "pg": "8.23.0",
     "pixelmatch": "7.2.0",
     "pngjs": "7.0.0",
     "puppeteer": "24.42.0"
   },
   "devDependencies": {
     "@types/node": "25.6.0",
+    "@types/pg": "8.23.1",
     "@types/pngjs": "6.0.5",
     "tsx": "4.21.0",
     "typescript": "6.0.3"

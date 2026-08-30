@@ -4,24 +4,46 @@ MCP servers I use across projects distributed as a single npm package with one b
 
 ## Installation (consumers)
 
-Wire a server into any MCP client config:
+Wire up **one bin per project**, not the whole package — a project gets only the
+servers it actually needs. The invocation is `npx -y <package> <bin>`:
 
 ```json
+// .mcp.json in the project that needs a browser
 {
   "mcpServers": {
     "visualizer": {
       "command": "npx",
-      "args": ["-y", "@tscafejr/mcp", "mcp-visualizer"]
+      "args": ["-y", "@tscafejr/mcp", "mcp-visualizer"],
+      "env": { "MCP_DEV_SERVER_PORT": "5173" }
     }
   }
 }
 ```
+
+```json
+// .mcp.json in the project that needs a database
+{
+  "mcpServers": {
+    "db": {
+      "command": "npx",
+      "args": ["-y", "@tscafejr/mcp", "mcp-db"],
+      "env": { "MCP_DB_URL": "sqlite:./data/app.db" }
+    }
+  }
+}
+```
+
+Both bins ship in one package, so `npx` installs all of its dependencies
+regardless of which bin you run — including puppeteer, which downloads Chromium.
+In a project that only wants `mcp-db`, add `"PUPPETEER_SKIP_DOWNLOAD": "1"` to
+that server's `env` to skip it.
 
 ## Available servers
 
 | Bin              | Source                      | Description                                                                                                                                     |
 | ---------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mcp-visualizer` | `src/servers/visualizer.ts` | Drives a real browser against a running web app: navigate, inspect, click, type, screenshot, diagnose and visually diff. Framework-agnostic — Vite, Next.js, CRA, Netlify dev, deploy previews, anything that serves HTTP. |
+| `mcp-db`         | `src/servers/db.ts`         | Read-only SQL against SQLite or Postgres: schema introspection, queries, query plans, and migration drift. Writes are impossible by construction. |
 
 ---
 
@@ -159,6 +181,61 @@ the directory if you only use it locally within a session.
 The comparison is pixel-exact, so a baseline is only meaningful against the same
 capture settings — keep `max_width`, `full_page` and viewport identical between
 runs, or re-record with `update: true`.
+
+---
+
+## `mcp-db`
+
+Read-only access to a project's database, so schema questions get answered from
+the database rather than guessed from the code. SQLite and Postgres.
+
+### It cannot write
+
+Two independent layers, both verified:
+
+1. **The connection is read-only.** SQLite is opened with `readOnly: true`;
+   every Postgres statement runs inside a `BEGIN READ ONLY` transaction that is
+   rolled back afterwards. `DELETE`, `UPDATE`, `CREATE` and `DROP` all fail at
+   the engine — *"cannot execute DELETE in a read-only transaction"*.
+2. **A statement gate in front of it.** Only `SELECT`, `WITH`, `EXPLAIN`,
+   `SHOW`, `TABLE` and `VALUES` are accepted, chained statements are refused,
+   and a data-modifying CTE — `WITH x AS (DELETE ... RETURNING ...)`, which
+   legitimately starts with `WITH` — is caught by keyword scan after comments
+   and string literals are stripped.
+
+The gate exists for clear error messages; the engine is the actual guarantee.
+
+### Configuration
+
+| Variable                   | Default              | Purpose                                                   |
+| -------------------------- | -------------------- | ---------------------------------------------------------- |
+| `MCP_DB_URL`               | *(required)*         | `postgresql://…`, `sqlite:./path.db`, or a path to a file. |
+| `MCP_DB_MIGRATIONS_DIR`    | auto-detected        | Overrides migration directory discovery.                    |
+| `MCP_DB_MAX_ROWS`          | `50`                 | Default row cap for `db_query`.                             |
+| `MCP_DB_MAX_CHARS`         | `8000`               | Output cap per result.                                      |
+| `MCP_DB_MAX_CELL`          | `60`                 | Per-cell truncation width.                                  |
+| `MCP_DB_TIMEOUT_MS`        | `10000`              | Postgres `statement_timeout`.                               |
+
+`MCP_DB_URL` accepts the `sqlite:data/app.db?mode=rwc` form sqlx uses — the
+query string is ignored and relative paths resolve against the server's working
+directory. Migration directories are discovered in this order: `migrations/`,
+`supabase/migrations/`, `db/migrations/`, `drizzle/`, `prisma/migrations/`.
+
+Managed Postgres (Supabase, Neon, RDS) terminates TLS with a chain Node does not
+trust by default, so non-localhost connections use `rejectUnauthorized: false`.
+
+### Tools
+
+| Tool             | Notes                                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `db_schema`      | No args: every table and view with row counts. `table`: columns, types, nullability, defaults, keys, indexes, foreign keys **in both directions**, and the DDL. `search`: match table and column names. |
+| `db_query`       | A single read-only statement. Results are capped by wrapping the query, and one extra row is fetched so "exactly 3 rows" is distinguishable from "the first 3 of many". |
+| `db_explain`     | Query plan. `analyze: true` (Postgres) executes for real timings — still inside the read-only transaction.           |
+| `db_migrations`  | Migration files on disk versus what the database applied. Reports pending migrations, ones applied but **missing from disk** (you switched branches), and failures. Understands sqlx, Supabase, Drizzle and plain `schema_migrations`. |
+
+SQLite support uses Node's built-in `node:sqlite`, so it adds no dependency, but
+it needs **Node 22.5 or newer**. Postgres uses `pg`, imported lazily so a
+SQLite-only project never loads it.
 
 ---
 
