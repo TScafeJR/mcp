@@ -33,6 +33,12 @@ servers it actually needs. The invocation is `npx -y <package> <bin>`:
 }
 ```
 
+`npx <package> <name>` works because the package ships a bin called `mcp` —
+npm derives the command from the unscoped package name, so a multi-bin package
+without one fails with *"could not determine executable to run"*. That `mcp` bin
+is a dispatcher: it takes the server name and hands off. The explicit
+`npx -y -p @tscafejr/mcp mcp-db` form works too and does not depend on it.
+
 Both bins ship in one package, so `npx` installs all of its dependencies
 regardless of which bin you run — including puppeteer, which downloads Chromium.
 In a project that only wants `mcp-db`, add `"PUPPETEER_SKIP_DOWNLOAD": "1"` to
@@ -44,6 +50,10 @@ that server's `env` to skip it.
 | ---------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mcp-visualizer` | `src/servers/visualizer.ts` | Drives a real browser against a running web app: navigate, inspect, click, type, screenshot, diagnose and visually diff. Framework-agnostic — Vite, Next.js, CRA, Netlify dev, deploy previews, anything that serves HTTP. |
 | `mcp-db`         | `src/servers/db.ts`         | Read-only SQL against SQLite or Postgres: schema introspection, queries, query plans, and migration drift. Writes are impossible by construction. |
+| `mcp`            | `src/servers/mcp.ts`        | Dispatcher, not a server. Exists so `npx <package> <name>` resolves — see [Troubleshooting](#troubleshooting). |
+
+**Requirements:** Node 18+ generally; `mcp-db`'s SQLite support needs Node 22.5+
+for the built-in `node:sqlite` module.
 
 ---
 
@@ -215,14 +225,28 @@ The gate exists for clear error messages; the engine is the actual guarantee.
 | `MCP_DB_MAX_CHARS`         | `8000`               | Output cap per result.                                      |
 | `MCP_DB_MAX_CELL`          | `60`                 | Per-cell truncation width.                                  |
 | `MCP_DB_TIMEOUT_MS`        | `10000`              | Postgres `statement_timeout`.                               |
+| `MCP_DB_BUSY_TIMEOUT_MS`   | `3000`               | SQLite `busy_timeout` — how long to wait out a concurrent writer. |
 
 `MCP_DB_URL` accepts the `sqlite:data/app.db?mode=rwc` form sqlx uses — the
 query string is ignored and relative paths resolve against the server's working
-directory. Migration directories are discovered in this order: `migrations/`,
+directory. A leading `~` expands to your home directory, so an absolute path
+need not be hardcoded. `$VAR` is deliberately **not** expanded: a Postgres
+password may legitimately contain `$`, and expanding it would corrupt real
+connection strings. If your MCP client supports `${VAR}` in its own config
+(Claude Code does), use that instead of putting a password in the file.
+
+The server prints what it resolved to stderr as soon as it starts, so a bad
+path shows up at launch rather than on the first query. Migration directories are discovered in this order: `migrations/`,
 `supabase/migrations/`, `db/migrations/`, `drizzle/`, `prisma/migrations/`.
 
 Managed Postgres (Supabase, Neon, RDS) terminates TLS with a chain Node does not
 trust by default, so non-localhost connections use `rejectUnauthorized: false`.
+
+Pointing this at a database your app is actively writing to is fine. The
+connection is read-only and holds no transaction between calls; SQLite gets a
+`busy_timeout` so a concurrent writer produces a short wait rather than a
+`SQLITE_BUSY` error. Under WAL, readers and writers do not block each other at
+all.
 
 ### Tools
 
@@ -236,6 +260,45 @@ trust by default, so non-localhost connections use `rejectUnauthorized: false`.
 SQLite support uses Node's built-in `node:sqlite`, so it adds no dependency, but
 it needs **Node 22.5 or newer**. Postgres uses `pg`, imported lazily so a
 SQLite-only project never loads it.
+
+---
+
+## Troubleshooting
+
+### `npm error could not determine executable to run`
+
+npm picks the bin for `npx <package> <args>` by stripping the scope off the
+package name — `@tscafejr/mcp` becomes `mcp` — and looking for a bin with that
+name. It falls back to the only bin when a package has exactly one. This package
+had one bin through 0.4.0, so the short form worked; adding a second bin in 0.5.0
+broke it for **both** servers.
+
+- **On 0.5.1 or later:** nothing to do. The `mcp` dispatcher bin makes the short
+  form resolve again.
+- **On 0.5.0:** use the explicit package flag —
+  `"args": ["-y", "-p", "@tscafejr/mcp", "mcp-visualizer"]`. This form works on
+  every version and never depends on bin-name inference.
+
+Clearing the npx cache does not help; the resolution fails before the cache is
+consulted.
+
+### `mcp-db` reports a path you did not configure
+
+It prints what it resolved at startup:
+
+```
+mcp-db: sqlite → /Users/you/project/data/app.db
+```
+
+Relative paths resolve against the working directory the MCP client launched the
+server in, which is not always the project root. A leading `~` is expanded by
+the server, so `sqlite:~/code/project/data/app.db` is portable across machines
+and does not rely on the client expanding anything.
+
+### The database file does not exist yet
+
+`mcp-db` will not create one. Run your app or your migration tool first — the
+error names the absolute path it tried.
 
 ---
 
@@ -258,12 +321,17 @@ SQLite-only project never loads it.
 
    ```json
    "bin": {
+     "mcp": "dist/servers/mcp.js",
      "mcp-visualizer": "dist/servers/visualizer.js",
      "mcp-<name>": "dist/servers/<name>.js"
    }
    ```
 
-3. Build and run locally:
+3. Register it in the dispatcher's `SERVERS` map in `src/servers/mcp.ts`.
+   Skipping this does not break the `npx -y -p <package> mcp-<name>` form, but
+   `npx <package> mcp-<name>` will report an unknown server.
+
+4. Build and run locally:
 
    ```sh
    npm run build

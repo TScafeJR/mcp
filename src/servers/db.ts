@@ -8,6 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { callTool, tools } from "../db/tools.js";
 import { closeDriver } from "../db/driver.js";
+import { resolveTarget } from "../db/config.js";
 
 // node:sqlite is still flagged experimental; its warning on every start reads
 // as an error in some MCP clients.
@@ -23,6 +24,16 @@ async function version(): Promise<string> {
   } catch {
     return "0.0.0";
   }
+}
+
+// Report configuration problems at startup instead of on the first tool call.
+// Stderr only — exiting here would surface as an opaque "server failed to
+// connect" in most clients, which is strictly less useful.
+try {
+  const target = resolveTarget();
+  console.error(`mcp-db: ${target.dialect} → ${target.label}`);
+} catch (err) {
+  console.error(`mcp-db: configuration problem — ${(err as Error).message}`);
 }
 
 const server = new Server(

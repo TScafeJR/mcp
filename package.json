@@ -6,6 +6,7 @@
   "author": "Tyrone Scafe",
   "type": "module",
   "bin": {
+    "mcp": "dist/servers/mcp.js",
     "mcp-db": "dist/servers/db.js",
     "mcp-visualizer": "dist/servers/visualizer.js"
   },

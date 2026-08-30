@@ -1,4 +1,5 @@
 import {
+  BUSY_TIMEOUT_MS,
   STATEMENT_TIMEOUT_MS,
   resolveTarget,
   type DbTarget,
@@ -39,6 +40,13 @@ async function openSqlite(target: DbTarget): Promise<Driver> {
   }
 
   const db = new sqlite.DatabaseSync(target.target, { readOnly: true });
+  // The project's own app may be mid-write; wait briefly rather than failing
+  // the call with SQLITE_BUSY.
+  try {
+    db.exec(`pragma busy_timeout = ${BUSY_TIMEOUT_MS}`);
+  } catch {
+    /* older runtime — the default of 0 still works, it just gives up sooner */
+  }
 
   return {
     dialect: "sqlite",

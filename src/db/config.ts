@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 export type Dialect = "sqlite" | "postgres";
@@ -22,8 +23,20 @@ export const MAX_ROWS = envInt("MCP_DB_MAX_ROWS", 50);
 export const MAX_CHARS = envInt("MCP_DB_MAX_CHARS", 8_000);
 export const MAX_CELL = envInt("MCP_DB_MAX_CELL", 60);
 export const STATEMENT_TIMEOUT_MS = envInt("MCP_DB_TIMEOUT_MS", 10_000);
+export const BUSY_TIMEOUT_MS = envInt("MCP_DB_BUSY_TIMEOUT_MS", 3_000);
 
 const SQLITE_EXTENSIONS = /\.(db|sqlite|sqlite3|db3)$/i;
+
+/**
+ * Expands a leading `~`. Deliberately not general shell expansion: a Postgres
+ * password may legitimately contain `$`, so expanding $VAR would corrupt real
+ * connection strings.
+ */
+function expandHome(input: string): string {
+  if (input === "~") return os.homedir();
+  if (input.startsWith("~/")) return path.join(os.homedir(), input.slice(2));
+  return input;
+}
 
 /** Strips credentials so a connection can be named in output safely. */
 export function redact(url: string): string {
@@ -68,7 +81,10 @@ export function resolveTarget(): DbTarget {
     if (filePath === ":memory:") {
       throw new Error("An in-memory SQLite database has nothing to inspect.");
     }
-    const absolute = path.resolve(process.cwd(), decodeURIComponent(filePath));
+    const absolute = path.resolve(
+      process.cwd(),
+      expandHome(decodeURIComponent(filePath)),
+    );
     if (!fs.existsSync(absolute)) {
       throw new Error(
         `No SQLite database at ${absolute}\n` +
